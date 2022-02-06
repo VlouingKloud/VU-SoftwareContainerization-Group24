@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+        name: packmanserver
+spec:
+        selector:
+                matchLabels:
+                        app: packmanserver
+        template:
+                metadata:
+                        name: packmanserver-pod
+                        labels:
+                                app: packmanserver
+                spec:
+                        serviceAccountName: whoami
+                        containers:
+                                - name: packmanserver
+                                  image: lofyin/packmanserver:latest
+                                  imagePullPolicy: Always
