@@ -1,72 +1,35 @@
+import urllib3
 from bottle import Bottle
-import psycopg2
-
-"""
-the ip addr of the server is https://34.110.169.110/
-
-two endpoints are /compare/<packname>/v1/v2 and /view/<package>/version
-"""
 
 app = Bottle()
+http = urllib3.PoolManager()
+
+def create_table(table_json):
+    table = ""
+    for row in table_json:
+        table += f"<tr> <th> {str(row)} </th> <td> {table_json[str(row)]} </td> </tr>"
+    return "<table style='width: 300px;'" + table + "</table>"
 
 @app.route('/')
 def index():
-    return 'DEMO PackMan'
-
-@app.route('/list-all')
-def list_all():
-    # 
-    return 'Not Implemented'
-
-    return packages
-
-@app.route('/view/<package>/<version>')
-def view_deps(package, version):
-    conn = psycopg2.connect("dbname=deps user=postgres password=b9TsWez5Fq host=my-release-postgresql.default.svc.cluster.local")
-    cur = conn.cursor()
-    cur.execute("select dep, depver from packdeps where pkg = '{}' and pkgver = {};".format(package, version))
-    deps = cur.fetchall()
-
-    res = {}
-
-    for i in deps:
-        res[i[0]] = i[1]
-
-    cur.close()
-    conn.close()
-
-    return res
-
-@app.route('/compare/<package>/<v1>/<v2>')
-def compare(package, v1, v2):
-    deps_v1 = {}
-    deps_v2 = {}
-
-    conn = psycopg2.connect("dbname=deps user=postgres password=b9TsWez5Fq host=my-release-postgresql.default.svc.cluster.local")
-    cur = conn.cursor()
-    cur.execute("select dep, depver from packdeps where pkg = '{}' and pkgver = {};".format(package, v1))
-    deps = cur.fetchall()
-
-    res = {}
-
-    for i in deps:
-        res[i[0]] = i[1]
-    deps_v1 = res
-
-    #conn = psycopg2.connect("dbname=deps user=postgres password=b9TsWez5Fq host=my-release-postgresql.default.svc.cluster.local")
-    #cur = conn.cursor()
-    cur.execute("select dep, depver from packdeps where pkg = '{}' and pkgver = {};".format(package, v2))
-    deps = cur.fetchall()
-
-    res = {}
-
-    for i in deps:
-        res[i[0]] = i[1]
-    cur.close()
-    conn.close()
-
-    return {'v1': deps_v1, 'v2': res}
+    return 'View the <a href="/view"> dependencies<a> of python390 or compare the <a href="/compare">differences</a> between python370 and python390'
+    return 'View the <a href=>dependencies of package python 390<a href="https://34.110.169.110/compare/python/390/370">the differences</a>'
 
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port = 8000)
+@app.route('/view/<programming_language>/<ver>')
+def view(programming_language, ver):
+    r = http.request('GET', f'http://34.110.169.110/view/{programming_language}/{ver}')
+    a = r.data.decode()
+    a = eval(a)
+    return '<style>table, th, td {border: 1px solid black;}</style>' + f'{programming_language} {ver} requires ' + create_table(a)
+
+
+@app.route('/compare/<programming_language>/<ver1>/<ver2>')
+def compare(programming_language, ver1, ver2):
+    r = http.request('GET', f'http://34.110.169.110/compare/{programming_language}/{ver1}/{ver2}')
+    a = r.data.decode()
+    a = eval(a)
+    return '<style>table, th, td {border: 1px solid black;}</style>' + f'{programming_language} {ver1} requires ' + create_table(a['v1']) + f' <br> while {programming_language} {ver2} requires ' + create_table(a['v2'])
+
+
+app.run(host='0.0.0.0', port = '10086')
