@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+        name: packmanfront
+spec:
+        selector:
+                matchLabels:
+                        app: packmanfront
+        template:
+                metadata:
+                        name: packmanfront-pod
+                        labels:
+                                app: packmanfront
+                spec:
+                        serviceAccountName: whoami
+                        containers:
+                                - name: packmanfront
+                                  image: lofyin/packmanfront:latest
+                                  imagePullPolicy: Always
